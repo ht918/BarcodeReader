@@ -54,8 +54,6 @@ public class MainActivity extends AppCompatActivity implements OnScanListener{
 
         picker.setOnScanListener(this);
 
-//        setContentView(picker);
-
         WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
 
