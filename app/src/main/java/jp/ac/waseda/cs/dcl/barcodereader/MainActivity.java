@@ -4,9 +4,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Point;
+import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -21,6 +23,9 @@ import com.scandit.barcodepicker.ScanSession;
 import com.scandit.barcodepicker.ScanSettings;
 import com.scandit.barcodepicker.ScanditLicense;
 import com.scandit.recognition.Barcode;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -38,6 +43,10 @@ public class MainActivity extends AppCompatActivity implements OnScanListener{
     private BarcodePicker picker;
     Button scanButton;
     Handler handler = new Handler();
+    Document document;
+    static String uriBefore = "http://www.books.or.jp/ResultDetail.aspx?scode=&searchtype=1&title=&series=&writer=&ymin=&ymax=&mmin=&mmax=&syuppansya=&isbn=";
+    static String uriAfter = "&showcount=20&startindex=0";
+    BufferedWriter titleWriter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements OnScanListener{
     public void didScan(ScanSession session){
 
         List<Barcode> barcodeList = session.getNewlyRecognizedCodes();
-        String code = barcodeList.get(0).getData();
+        final String code = barcodeList.get(0).getData();
         if(!code.substring(0,3).equals("978") && code.length() == 13){
             Toast toast = Toast.makeText(this,code+"はISBNコードではありません",Toast.LENGTH_SHORT);
             toast.show();
@@ -97,16 +106,41 @@ public class MainActivity extends AppCompatActivity implements OnScanListener{
         List<String> savedBarcode = new ArrayList<String>();
 
         try {
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(openFileOutput("ISBN.txt", Context.MODE_APPEND)));
+            BufferedWriter isbnWriter = new BufferedWriter(new OutputStreamWriter(openFileOutput("ISBN.txt", Context.MODE_APPEND)));
+            titleWriter = new BufferedWriter(new OutputStreamWriter(openFileOutput("Titles.txt", Context.MODE_APPEND)));
             BufferedReader reader = new BufferedReader(new InputStreamReader(openFileInput("ISBN.txt")));
             while(reader.ready()){
                 savedBarcode.add(reader.readLine());
             }
             reader.close();
             String scannedCode = code;
+            Log.d("Read:","Read!!");
             if(savedBarcode.indexOf(code) == -1){
-                writer.write(code);
-                writer.newLine();
+                isbnWriter.write(code);
+                isbnWriter.newLine();
+                final String uri = uriBefore + code + uriAfter;
+
+                AsyncTask<Void,Void,Void> task = new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Void... params) {
+                        try {
+                            document = Jsoup.connect(uri).get();
+                            Log.d("Connect",document.toString());
+                            String title = document.getElementById("hlBookTitle").text();
+                            Log.d("Title",title);
+                            titleWriter.write(title + "(" + code + ")");
+                            titleWriter.newLine();
+                            titleWriter.close();
+                        }catch(IOException ioe){
+                            Log.e("IOException",ioe.toString());
+                        }
+                        return null;
+                    }
+                };
+                task.execute();
+//                IsbnSearcher searcher = new IsbnSearcher(code);
+//                titleWriter.write(searcher.getTitle());
+//                titleWriter.newLine();
                 Toast toast = Toast.makeText(this,scannedCode+"を読み取りました",Toast.LENGTH_SHORT);
                 toast.show();
             }else{
@@ -123,7 +157,8 @@ public class MainActivity extends AppCompatActivity implements OnScanListener{
                 },3000);
                 return;
             }
-            writer.close();
+            isbnWriter.close();
+//            titleWriter.close();
         }catch(Exception e){
         }
 
@@ -170,6 +205,8 @@ public class MainActivity extends AppCompatActivity implements OnScanListener{
                     public void onClick(DialogInterface dialog,int which){
                         try {
                             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(openFileOutput("ISBN.txt", Context.MODE_PRIVATE)));
+                            writer.close();
+                            writer = new BufferedWriter(new OutputStreamWriter(openFileOutput("Titles.txt", Context.MODE_PRIVATE)));
                             writer.close();
                         }catch(Exception e) {
                         }

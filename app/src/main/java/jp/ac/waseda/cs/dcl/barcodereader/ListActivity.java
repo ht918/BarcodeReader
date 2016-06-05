@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -36,9 +37,12 @@ public class ListActivity extends AppCompatActivity {
     void setBarcodeList(){
         List<String> barcodeList = new ArrayList<String>();
         try{
-            BufferedReader reader = new BufferedReader(new InputStreamReader(openFileInput("ISBN.txt")));
+            Log.d("SetBarcodeList","Start!");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(openFileInput("Titles.txt")));
             while(reader.ready()){
-                barcodeList.add(reader.readLine());
+                String str = reader.readLine();
+                Log.d("ReadLine",str);
+                barcodeList.add(str);
             }
             reader.close();
         }catch (Exception e){
@@ -59,6 +63,8 @@ public class ListActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog,int which){
                         try {
                             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(openFileOutput("ISBN.txt", Context.MODE_PRIVATE)));
+                            writer.close();
+                            writer = new BufferedWriter(new OutputStreamWriter(openFileOutput("Titles.txt", Context.MODE_PRIVATE)));
                             writer.close();
                         }catch(Exception e) {
                         }
