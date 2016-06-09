@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity implements OnScanListener{
     Button scanButton;
     Handler handler = new Handler();
     Document document;
-    static String uriBefore = "http://www.books.or.jp/ResultDetail.aspx?scode=&searchtype=1&title=&series=&writer=&ymin=&ymax=&mmin=&mmax=&syuppansya=&isbn=";
+    static String uriBefore = "http://www.books.or.jp/ResultDetail.aspx?searchtype=1&isbn=";
     static String uriAfter = "&showcount=20&startindex=0";
     BufferedWriter titleWriter;
 
@@ -118,16 +118,24 @@ public class MainActivity extends AppCompatActivity implements OnScanListener{
             if(savedBarcode.indexOf(code) == -1){
                 isbnWriter.write(code);
                 isbnWriter.newLine();
-                final String uri = uriBefore + code + uriAfter;
+//                final String uri = uriBefore + code + uriAfter;
 
                 AsyncTask<Void,Void,Void> task = new AsyncTask<Void, Void, Void>() {
                     @Override
                     protected Void doInBackground(Void... params) {
                         try {
+                            String uri = uriBefore + code;
                             document = Jsoup.connect(uri).get();
-                            Log.d("Connect",document.toString());
+//                            Log.d("Connect",document.toString());
                             String title = document.getElementById("hlBookTitle").text();
+                            if(title.isEmpty()){
+                                title = document.getElementById("book").getElementsByTag("h2").text();
+                                String kana = document.getElementById("book").getElementsByClass("kana").text();
+                                Log.d("kana",kana);
+                                title = title.replace(kana,"").trim();
+                            }
                             Log.d("Title",title);
+                            Log.d("other", document.getElementById("book").getElementsByTag("h2").text());
                             titleWriter.write(title + "(" + code + ")");
                             titleWriter.newLine();
                             titleWriter.close();
