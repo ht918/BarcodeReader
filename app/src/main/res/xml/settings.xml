@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+        android:key="restartTime"
+        android:title="再読み取り時間(ms)"
+        android:dialogTitle="再読み取り時間(ms)"
+        android:inputType="number"
+        android:defaultValue="3000" />
+</PreferenceScreen>
