@@ -233,6 +233,7 @@ public class MainActivity extends AppCompatActivity implements OnScanListener {
                     }
                 });
         alertDlg.create().show();
+        //test;
     }
 
     @Override
